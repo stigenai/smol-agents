@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "mailbox": {
-      "command": "/nix/store/yppabql124fzdqndzda4rn2fkh72z69z-claude-mailbox-0.6.0/bin/claude-mailbox",
+      "command": "/nix/store/whxxmbc7j828m982qpg59mh7cp264rw0-claude-mailbox-0.7.0/bin/claude-mailbox",
       "env": {
         "HOME": "/Users/ztaylor",
         "MAILBOX_WORKSPACE": "/Users/ztaylor/repos/workspaces/claude-mailbox",
