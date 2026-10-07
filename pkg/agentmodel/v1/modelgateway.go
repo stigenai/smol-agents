@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ModelGatewaySpec declares an operator-managed model/agent gateway (yxh.2): a
@@ -160,6 +162,16 @@ type ModelGatewayStatus struct {
 	Reason string `json:"reason,omitempty"`
 	// +optional
 	Message string `json:"message,omitempty"`
+
+	// Conditions follows the standard Kubernetes condition pattern (Ready /
+	// Progressing), enabling `kubectl wait --for=condition=Ready` and
+	// Argo/Flux health assessment. Phase/Reason/Message remain the
+	// human-readable summary; Conditions is additive. +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // HermesDefaultPort is the nousresearch/hermes-agent API server port.

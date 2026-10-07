@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -107,6 +108,7 @@ func (r *ModelGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		gw.Status.Phase, gw.Status.Reason, gw.Status.Message = "Pending", "Deploying", "gateway Deployment not yet available"
 	}
 	gw.Status.ObservedGeneration = gw.Generation
+	setGatewayConditions(gw, gw.Status.Phase, gw.Status.Reason, gw.Status.Message)
 	logger.Info("modelgateway reconciled", "provider", gw.Spec.Provider, "phase", gw.Status.Phase, "endpoint", gw.Status.Endpoint)
 	return ctrl.Result{}, r.statusUpdateIfChanged(ctx, gw, prev)
 }
@@ -180,7 +182,19 @@ func verifyGatewaySecrets(ctx context.Context, c client.Client, gw *amv1.ModelGa
 func (r *ModelGatewayReconciler) writeStatus(ctx context.Context, gw *amv1.ModelGateway, prev pure.ModelGatewayStatus, phase, reason, msg string) (ctrl.Result, error) {
 	gw.Status.Phase, gw.Status.Reason, gw.Status.Message = phase, reason, msg
 	gw.Status.ObservedGeneration = gw.Generation
+	setGatewayConditions(gw, phase, reason, msg)
 	return ctrl.Result{}, r.statusUpdateIfChanged(ctx, gw, prev)
+}
+
+// setGatewayConditions upserts the standard Ready/Progressing conditions from
+// the gateway's ad-hoc Phase/Reason/Message.
+func setGatewayConditions(gw *amv1.ModelGateway, phase, reason, msg string) {
+	ready := metav1.ConditionFalse
+	if phase == "Ready" {
+		ready = metav1.ConditionTrue
+	}
+	setReadyCondition(&gw.Status.Conditions, gw.Generation, ready, reason, msg)
+	setProgressingCondition(&gw.Status.Conditions, gw.Generation, phase == "Pending", reason, msg)
 }
 
 func (r *ModelGatewayReconciler) statusUpdateIfChanged(ctx context.Context, gw *amv1.ModelGateway, prev pure.ModelGatewayStatus) error {

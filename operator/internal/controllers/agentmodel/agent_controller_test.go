@@ -9,6 +9,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -322,6 +323,22 @@ func TestSetStatus_RecordsAllFields(t *testing.T) {
 	}
 	if a.Status.ObservedGeneration != 5 {
 		t.Errorf("gen = %d", a.Status.ObservedGeneration)
+	}
+	cond := apimeta.FindStatusCondition(a.Status.Conditions, ConditionReady)
+	if cond == nil {
+		t.Fatal("Ready condition not set")
+	}
+	if cond.Status != metav1.ConditionTrue {
+		t.Errorf("Ready condition status = %v, want True", cond.Status)
+	}
+	if cond.Reason != "Reconciled" {
+		t.Errorf("Ready condition reason = %q", cond.Reason)
+	}
+	if cond.ObservedGeneration != 5 {
+		t.Errorf("Ready condition observedGeneration = %d", cond.ObservedGeneration)
+	}
+	if prog := apimeta.FindStatusCondition(a.Status.Conditions, ConditionProgressing); prog == nil || prog.Status != metav1.ConditionFalse {
+		t.Errorf("Progressing condition = %+v, want False", prog)
 	}
 }
 

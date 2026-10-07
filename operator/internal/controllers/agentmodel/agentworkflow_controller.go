@@ -191,6 +191,19 @@ func (r *AgentWorkflowReconciler) emitWorkflowResultOnce(ctx context.Context, wf
 
 func (r *AgentWorkflowReconciler) applyWF(ctx context.Context, wf *amv1.AgentWorkflow, desired pure.AgentWorkflowStatus, res ctrl.Result) (ctrl.Result, error) {
 	desired.ObservedGeneration = wf.Generation
+
+	desired.Conditions = wf.Status.Conditions
+	ready := metav1.ConditionFalse
+	condReason := desired.Reason
+	if condReason == "" {
+		condReason = string(desired.Phase)
+	}
+	if desired.Phase == pure.PhaseCompleted {
+		ready = metav1.ConditionTrue
+	}
+	setReadyCondition(&desired.Conditions, wf.Generation, ready, condReason, desired.Message)
+	setProgressingCondition(&desired.Conditions, wf.Generation, desired.Phase == pure.PhasePending || desired.Phase == pure.PhaseRunning, condReason, desired.Message)
+
 	if reflect.DeepEqual(wf.Status, desired) {
 		return res, nil
 	}

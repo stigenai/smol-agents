@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -263,6 +264,13 @@ func (r *AgentReconciler) setStatus(a *amv1.Agent, phase, reason, msg string) {
 	a.Status.Reason = reason
 	a.Status.Message = msg
 	a.Status.ObservedGeneration = a.Generation
+
+	ready := metav1.ConditionFalse
+	if phase == "Ready" {
+		ready = metav1.ConditionTrue
+	}
+	setReadyCondition(&a.Status.Conditions, a.Generation, ready, reason, msg)
+	setProgressingCondition(&a.Status.Conditions, a.Generation, phase == "Pending", reason, msg)
 }
 
 // isStdioMCPTool reports whether a tool is a kind=mcp tool targeting a stdio

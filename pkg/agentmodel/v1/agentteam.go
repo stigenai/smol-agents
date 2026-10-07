@@ -239,6 +239,16 @@ type AgentTeamStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// LastActivity is when a member last reported progress (a usage change). +optional
 	LastActivity *metav1.Time `json:"lastActivity,omitempty"`
+
+	// Conditions follows the standard Kubernetes condition pattern (Ready /
+	// Progressing), enabling `kubectl wait --for=condition=Ready` and
+	// Argo/Flux health assessment. Phase/Reason/Message remain the
+	// human-readable summary; Conditions is additive. +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // TeamMemberStatus is the operator-observed state of one member.

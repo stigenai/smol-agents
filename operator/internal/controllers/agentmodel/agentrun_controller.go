@@ -562,12 +562,16 @@ func (r *AgentRunReconciler) markPending(run *amv1.AgentRun, reason, msg string)
 	run.Status.Reason = reason
 	run.Status.TerminationReason = msg
 	run.Status.StartedAt = nil
+	setReadyCondition(&run.Status.Conditions, run.Generation, metav1.ConditionFalse, reason, msg)
+	setProgressingCondition(&run.Status.Conditions, run.Generation, true, reason, msg)
 }
 
 func (r *AgentRunReconciler) markRequiresAction(run *amv1.AgentRun, pa *pure.PendingAction) {
 	run.Status.State = pure.PhaseRequiresAction
 	run.Status.PendingAction = pa
 	run.Status.TerminationReason = "" // non-terminal; clear any stale Pending hint
+	setReadyCondition(&run.Status.Conditions, run.Generation, metav1.ConditionFalse, "RequiresAction", "awaiting an approval decision")
+	setProgressingCondition(&run.Status.Conditions, run.Generation, true, "RequiresAction", "awaiting an approval decision")
 }
 
 // approvalTimeout resolves the effective pre-run approval TTL: the Agent's
@@ -806,6 +810,8 @@ func (r *AgentRunReconciler) markRunning(run *amv1.AgentRun) {
 	run.Status.Reason = "" // clear any prior Pending reason (e.g. ConcurrencyLimited)
 	now := metav1.Now()
 	run.Status.StartedAt = &now
+	setReadyCondition(&run.Status.Conditions, run.Generation, metav1.ConditionFalse, "Running", "")
+	setProgressingCondition(&run.Status.Conditions, run.Generation, true, "Running", "")
 }
 
 func (r *AgentRunReconciler) markTerminal(run *amv1.AgentRun, phase pure.Phase, reason string) {
@@ -819,6 +825,14 @@ func (r *AgentRunReconciler) markTerminal(run *amv1.AgentRun, phase pure.Phase, 
 	// Running hint (e.g. "Pod is Pending" left by an earlier markPending).
 	// foldRunResult may refine this further with the runtime's own reason.
 	run.Status.TerminationReason = reason
+
+	readyStatus := metav1.ConditionFalse
+	condReason := string(phase)
+	if phase == pure.PhaseCompleted {
+		readyStatus = metav1.ConditionTrue
+	}
+	setReadyCondition(&run.Status.Conditions, run.Generation, readyStatus, condReason, reason)
+	setProgressingCondition(&run.Status.Conditions, run.Generation, false, condReason, reason)
 }
 
 // emitResultOnce POSTs a com.smol-agents.run.completed CloudEvent to the Agent's
@@ -1097,8 +1111,15 @@ func (r *AgentRunReconciler) foldRunResult(ctx context.Context, run *amv1.AgentR
 	case rr.TerminationReason != "":
 		run.Status.TerminationReason = rr.TerminationReason
 	}
-	if rr.Phase != "" {
+	if rr.Phase != "" && rr.Phase != run.Status.State {
 		run.Status.State = rr.Phase
+		readyStatus := metav1.ConditionFalse
+		condReason := string(rr.Phase)
+		if rr.Phase == pure.PhaseCompleted {
+			readyStatus = metav1.ConditionTrue
+		}
+		setReadyCondition(&run.Status.Conditions, run.Generation, readyStatus, condReason, run.Status.TerminationReason)
+		setProgressingCondition(&run.Status.Conditions, run.Generation, !rr.Phase.Terminal(), condReason, run.Status.TerminationReason)
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -235,6 +236,16 @@ func TestAgentRunReconciler_MarkTerminal(t *testing.T) {
 	}
 	if run.Status.EndedAt == nil {
 		t.Error("EndedAt not set")
+	}
+	cond := apimeta.FindStatusCondition(run.Status.Conditions, ConditionReady)
+	if cond == nil {
+		t.Fatal("Ready condition not set")
+	}
+	if cond.Status != metav1.ConditionTrue {
+		t.Errorf("Ready condition status = %v, want True on Completed", cond.Status)
+	}
+	if prog := apimeta.FindStatusCondition(run.Status.Conditions, ConditionProgressing); prog == nil || prog.Status != metav1.ConditionFalse {
+		t.Errorf("Progressing condition = %+v, want False on a terminal phase", prog)
 	}
 }
 

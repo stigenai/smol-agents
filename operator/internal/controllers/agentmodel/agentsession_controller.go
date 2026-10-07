@@ -482,6 +482,18 @@ func (r *AgentSessionReconciler) writeStatus(ctx context.Context, session *amv1.
 	session.Status.Reason = reason
 	session.Status.Message = message
 	session.Status.ObservedGeneration = session.Generation
+
+	ready := metav1.ConditionFalse
+	condReason := reason
+	if condReason == "" {
+		condReason = string(phase)
+	}
+	if phase == pure.PhaseRunning {
+		ready = metav1.ConditionTrue
+	}
+	setReadyCondition(&session.Status.Conditions, session.Generation, ready, condReason, message)
+	setProgressingCondition(&session.Status.Conditions, session.Generation, phase == pure.PhasePending, condReason, message)
+
 	if err := r.Status().Update(ctx, session); err != nil {
 		// A conflict means the object advanced; requeue and re-read rather than
 		// surfacing a noisy error.

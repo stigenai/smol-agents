@@ -161,6 +161,14 @@ func (r *AgentTeamReconciler) apply(ctx context.Context, team *amv1.AgentTeam, d
 		desired.LastActivity = &now
 	}
 
+	desired.Conditions = team.Status.Conditions
+	ready := metav1.ConditionFalse
+	if desired.Phase == pure.PhaseRunning {
+		ready = metav1.ConditionTrue
+	}
+	setReadyCondition(&desired.Conditions, team.Generation, ready, desired.Reason, desired.Message)
+	setProgressingCondition(&desired.Conditions, team.Generation, desired.Phase == pure.PhasePending, desired.Reason, desired.Message)
+
 	if statusEqual(team.Status, desired) {
 		return ctrl.Result{}, nil
 	}

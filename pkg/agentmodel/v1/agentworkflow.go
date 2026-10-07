@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AgentWorkflow is a declarative, result-routed DAG of agent steps (LangGraph
@@ -84,6 +86,16 @@ type AgentWorkflowStatus struct {
 	// CumulativeUsage rolls node usage up field-wise (never Usage.Add). +optional
 	CumulativeUsage    Usage `json:"cumulativeUsage,omitempty"`
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// Conditions follows the standard Kubernetes condition pattern (Ready /
+	// Progressing), enabling `kubectl wait --for=condition=Ready` and
+	// Argo/Flux health assessment. Phase/Reason/Message remain the
+	// human-readable summary; Conditions is additive. +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // NodeState is the operator-observed state of one node.

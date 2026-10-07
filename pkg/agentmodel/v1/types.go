@@ -107,6 +107,16 @@ type AgentStatus struct {
 	ResolvedProvider   string   `json:"resolvedProvider,omitempty"`
 	Reason             string   `json:"reason,omitempty"`
 	Message            string   `json:"message,omitempty"`
+
+	// Conditions follows the standard Kubernetes condition pattern (Ready /
+	// Progressing), enabling `kubectl wait --for=condition=Ready` and
+	// Argo/Flux health assessment. Phase/Reason/Message remain the
+	// human-readable summary; Conditions is additive. +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // Agent is the namespaced top-level CR.
@@ -508,6 +518,16 @@ type RunStatus struct {
 	// "unenforced" when the cluster CNI does not enforce NetworkPolicy so the
 	// created policies are silent no-ops (rv1.2). +optional
 	EgressEnforcement string `json:"egressEnforcement,omitempty"`
+
+	// Conditions follows the standard Kubernetes condition pattern (Ready /
+	// Progressing), enabling `kubectl wait --for=condition=Ready` and
+	// Argo/Flux health assessment. State/Reason/TerminationReason remain the
+	// human-readable summary; Conditions is additive. +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // TraceSummary is compact metadata about a run's step/tool-call trace, surfaced
@@ -701,6 +721,16 @@ type AgentSessionStatus struct {
 	FailedTurns int64 `json:"failedTurns,omitempty"`
 	// LastTurnTime is when the most recent turn completed. +optional
 	LastTurnTime *metav1.Time `json:"lastTurnTime,omitempty"`
+
+	// Conditions follows the standard Kubernetes condition pattern (Ready /
+	// Progressing), enabling `kubectl wait --for=condition=Ready` and
+	// Argo/Flux health assessment. Phase/Reason/Message remain the
+	// human-readable summary; Conditions is additive. +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // AgentPolicy — guardrails. R-AM-API-6.
