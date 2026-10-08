@@ -331,7 +331,8 @@ type AgentRun struct {
 
 // AgentRunSpec is a single bounded execution of the referenced Agent. The pod
 // sandbox (RuntimeClass) and egress policy are inherited from the Agent — there
-// is no per-run sandbox override.
+// is no per-run sandbox override. For when to use AgentRun vs the other
+// execution surfaces, see docs/design/workload-selection.md.
 type AgentRunSpec struct {
 	AgentRef string `json:"agentRef"`
 
@@ -522,7 +523,8 @@ type TraceSummary struct {
 	OverflowRef   string `json:"overflowRef,omitempty"`
 }
 
-// AgentSession — long-running aggregation. R-AM-API-5.
+// AgentSession — long-running aggregation. R-AM-API-5. For when to use a durable
+// session vs the other execution surfaces, see docs/design/workload-selection.md.
 type AgentSession struct {
 	Name   string             `json:"name"`
 	Spec   AgentSessionSpec   `json:"spec"`

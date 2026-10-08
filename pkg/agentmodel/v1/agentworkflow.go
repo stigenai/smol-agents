@@ -16,6 +16,9 @@ import (
 // Namespaced; every nodeRef is a bare same-namespace Agent (D1). The operator
 // materializes each ready node as a child AgentRun (A2A spawn shape: ownerRef
 // subtree GC, depth budget) and advances on terminal output.
+//
+// For when to use a static-DAG workflow vs the other execution surfaces, see
+// docs/design/workload-selection.md.
 type AgentWorkflow struct {
 	Name   string              `json:"name"`
 	Spec   AgentWorkflowSpec   `json:"spec"`

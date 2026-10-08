@@ -20,6 +20,9 @@ import (
 //
 // Namespaced; the lead and every member reference Agents in the SAME namespace
 // (D1 — no cross-tenant team without an explicit, policy-gated grant).
+//
+// For when to use a team (runtime LLM-lead routing) vs the other execution
+// surfaces, see docs/design/workload-selection.md.
 type AgentTeam struct {
 	Name   string          `json:"name"`
 	Spec   AgentTeamSpec   `json:"spec"`
